@@ -1,20 +1,24 @@
-FROM python:3.10 AS labels
-LABEL maintainer="Stefano Pigozzi <me@steffo.eu>"
-LABEL description="A customizable, multilanguage Telegram shop bot"
+# Base image
+FROM python:3.10 AS base
 
-FROM labels AS dependencies
-COPY requirements.txt ./requirements.txt
+# Set working directory
+WORKDIR /usr/src/ibtros
+
+# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM dependencies AS greed
-COPY . /usr/src/greed
-WORKDIR /usr/src/greed
+# Copy all source files
+COPY . .
 
-FROM greed AS entry
-ENTRYPOINT ["python", "-OO"]
-CMD ["core.py"]
+# Expose port 5000 for Flask
+EXPOSE 5000
 
-FROM entry AS environment
+# Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV CONFIG_PATH="/etc/greed/config.toml"
-ENV DB_ENGINE="sqlite:////var/lib/greed/database.sqlite"
+ENV CONFIG_PATH="/etc/ibtros/config.toml"
+ENV DB_ENGINE="sqlite:////var/lib/ibtros/database.sqlite"
+
+# Start the Flask application
+ENTRYPOINT ["python", "-OO"]
+CMD ["app.py"]
