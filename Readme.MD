@@ -3,6 +3,8 @@
 ## Overview
 IBTROS is an advanced AI-driven Telegram bot that provides real-time information retrieval and transportation assistance. The system leverages the **Azure OpenAI GPT-40 API**, **Azure Cognitive Services**, and a **robust backend** to process user queries and deliver precise results efficiently.
 
+[Try now](https://t.me/IBmeal_bot)
+
 ## Features
 - **Multi-modal AI Processing**: Integrates text, speech, image, and avatar functionalities powered by Azure AI.
 - **Database Support**: Uses SQLite or Azure PostgreSQL to retrieve real-time location-based information.
