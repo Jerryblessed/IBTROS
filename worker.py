@@ -496,65 +496,135 @@ class Worker(threading.Thread):
                 self.bot.send_message(self.chat.id, self.loc.get("error_user_does_not_exist"))
                 continue
             return user
-
     def __user_menu(self):
-        """Function called from the run method when the user is not an administrator.
-        Normal bot actions should be placed here."""
+        """Function for the non-administrator user menu. Normal bot actions are placed here."""
         log.debug("Displaying __user_menu")
-        # Loop used to returning to the menu after executing a command
+
         while True:
             # Create a keyboard with the user main menu
-            keyboard = [[telegram.KeyboardButton(self.loc.get("menu_order"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_language"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_add_app"))],
-                        # [telegram.KeyboardButton(self.loc.get("menu_add_credit"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_help")),
-                         telegram.KeyboardButton(self.loc.get("menu_bot_info"))]]
-            # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
-            self.bot.send_message(self.chat.id,
-                                  self.loc.get("conversation_open_user_menu",
-                                               credit=self.Price(self.user.credit)),
-                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
-            # Wait for a reply from the user
+            keyboard = self._get_user_keyboard()
+
+            # Send the keyboard to the user (one-time click enabled)
+            self.bot.send_message(
+                self.chat.id,
+                self.loc.get("conversation_open_user_menu", credit=self.Price(self.user.credit)),
+                reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+            )
+
+            # Wait for user input from specific menu options
             selection = self.__wait_for_specific_message([
                 self.loc.get("menu_order"),
                 self.loc.get("menu_order_status"),
-                # self.loc.get("menu_add_credit"),
+                self.loc.get("menu_credit"),
+                self.loc.get("menu_bot_chat"),
                 self.loc.get("menu_add_app"),
                 self.loc.get("menu_language"),
                 self.loc.get("menu_help"),
                 self.loc.get("menu_bot_info"),
             ])
-            # After the user reply, update the user data
+
+            # Update user data after selection
             self.update_user()
-            # If the user has selected the Order option...
-            if selection == self.loc.get("menu_order"):
-                # Open the order menu
-                self.__order_menu()
-            # If the user has selected the Order Status option...
-            elif selection == self.loc.get("menu_order_status"):
-                # Display the order(s) status
-                self.__order_status()
-            # If the user has selected the Add Credit option...
-            # elif selection == self.loc.get("menu_add_credit"):
-            #     # Display the add credit menu
-            #     self.__add_credit_menu()
-            elif selection == self.loc.get("menu_add_app"):
-                # Display the add credit menu
-                self.__add_app()
-            # If the user has selected the Language option...
-            elif selection == self.loc.get("menu_language"):
-                # Display the language menu
-                self.__language_menu()
-            # If the user has selected the Bot Info option...
-            elif selection == self.loc.get("menu_bot_info"):
-                # Display information about the bot
-                self.__bot_info()
-            # If the user has selected the Help option...
-            elif selection == self.loc.get("menu_help"):
-                # Go to the Help menu
-                self.__help_menu()
+
+            # Handle menu selections
+            menu_actions = {
+                self.loc.get("menu_order"): self.__order_menu,
+                self.loc.get("menu_order_status"): self.__order_status,
+                self.loc.get("menu_credit"): self.__add_credit,
+                self.loc.get("menu_bot_chat"): self.__bot_chat,
+                self.loc.get("menu_add_app"): self.__add_app,
+                self.loc.get("menu_language"): self.__language_menu,
+                self.loc.get("menu_help"): self.__help_menu,
+                self.loc.get("menu_bot_info"): self.__bot_info,
+            }
+
+            # Execute the corresponding function
+            if selection in menu_actions:
+                menu_actions[selection]()
+
+
+    def _get_user_keyboard(self):
+        """Helper function to generate the keyboard layout."""
+        return [
+            [telegram.KeyboardButton(self.loc.get("menu_order"))],
+            [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
+            [telegram.KeyboardButton(self.loc.get("menu_language"))],
+            [telegram.KeyboardButton(self.loc.get("menu_credit"))],
+            [telegram.KeyboardButton(self.loc.get("menu_bot_chat"))],
+            [telegram.KeyboardButton(self.loc.get("menu_add_app"))],
+            [telegram.KeyboardButton(self.loc.get("menu_help")), telegram.KeyboardButton(self.loc.get("menu_bot_info"))],
+        ]
+
+    # def __user_menu(self):
+    #     """Function called from the run method when the user is not an administrator.
+    #     Normal bot actions should be placed here."""
+    #     log.debug("Displaying __user_menu")
+    #     # Loop used to returning to the menu after executing a command
+    #     while True:
+    #         # Create a keyboard with the user main menu
+    #         keyboard = [[telegram.KeyboardButton(self.loc.get("menu_order"))],
+    #                     [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
+    #                     [telegram.KeyboardButton(self.loc.get("menu_language"))],
+    #                     [telegram.KeyboardButton(self.loc.get("menu_credit"))],
+    #                     [telegram.KeyboardButton(self.loc.get("menu_bot_chat"))],                        
+    #                     [telegram.KeyboardButton(self.loc.get("menu_add_app"))],
+    #                     # [telegram.KeyboardButton(self.loc.get("menu_add_credit"))],
+    #                     [telegram.KeyboardButton(self.loc.get("menu_help")),
+    #                      telegram.KeyboardButton(self.loc.get("menu_bot_info"))]]
+    #         # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
+    #         self.bot.send_message(self.chat.id,
+    #                               self.loc.get("conversation_open_user_menu",
+    #                                            credit=self.Price(self.user.credit)),
+    #                               reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+    #         # Wait for a reply from the user
+    #         selection = self.__wait_for_specific_message([
+    #             self.loc.get("menu_order"),
+    #             self.loc.get("menu_order_status"),
+    #             # self.loc.get("menu_add_credit"),
+
+    #             self.loc.get("menu_credit"),
+    #             self.loc.get("menu_bot_chat"),
+
+    #             self.loc.get("menu_add_app"),
+    #             self.loc.get("menu_language"),
+    #             self.loc.get("menu_help"),
+    #             self.loc.get("menu_bot_info"),
+    #         ])
+    #         # After the user reply, update the user data
+    #         self.update_user()
+    #         # If the user has selected the Order option...
+    #         if selection == self.loc.get("menu_order"):
+    #             # Open the order menu
+    #             self.__order_menu()
+    #         # If the user has selected the Order Status option...
+    #         elif selection == self.loc.get("menu_order_status"):
+    #             # Display the order(s) status
+    #             self.__order_status()
+    #         # If the user has selected the Add Credit option...
+    #         # elif selection == self.loc.get("menu_add_credit"):
+    #         #     # Display the add credit menu
+    #         #     self.__add_credit_menu()
+    #         elif selection == self.loc.get("menu_credit"):
+    #             # Display the add credit menu
+    #             self.__add_credit()
+    #         elif selection == self.loc.get("menu_bot_chat"):
+    #             # Display the add credit menu
+    #             self.__bot_chat()
+    #         elif selection == self.loc.get("menu_add_app"):
+    #             # Display the add credit menu
+    #             self.__add_app()
+    #         # If the user has selected the Language option...
+    #         elif selection == self.loc.get("menu_language"):
+    #             # Display the language menu
+    #             self.__language_menu()
+    #         # If the user has selected the Bot Info option...
+    #         elif selection == self.loc.get("menu_bot_info"):
+    #             # Display information about the bot
+    #             self.__bot_info()
+    #         # If the user has selected the Help option...
+    #         elif selection == self.loc.get("menu_help"):
+    #             # Go to the Help menu
+    #             self.__help_menu()
 
     def __order_menu(self):
         """User menu to order products from the shop."""
@@ -1206,6 +1276,28 @@ class Worker(threading.Thread):
 
         # Send the button to the user
         self.bot.send_message(self.chat.id, "  view webpage", reply_markup=reply_markup)
+        
+    def __bot_chat(self):
+        """Send a button that opens the Paystack payment link when clicked."""
+        payment_url = "https://lighteducation.pythonanywhere.com/chat"
+
+        # Create an inline button with the payment link
+        keyboard = [[InlineKeyboardButton("👨🏽‍🦱 Ask live avatar bot question", url=payment_url)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Send the button to the user
+        self.bot.send_message(self.chat.id, " Interact with human avatar", reply_markup=reply_markup)
+
+    def __add_credit(self):
+        """Send a button that opens the Paystack payment link when clicked."""
+        payment_url = "https://paystack.com/pay/judx07x776"
+
+        # Create an inline button with the payment link
+        keyboard = [[InlineKeyboardButton(" Add fund", url=payment_url)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Send the button to the user
+        self.bot.send_message(self.chat.id, "  💵view webpage", reply_markup=reply_markup)
             
     def __add_credit_cc(self):
         """Add money to the wallet through a credit card payment."""
